@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net.Http;
-using System.Collections.Generic;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using System.Linq;
@@ -20,7 +18,6 @@ namespace MassImageUploader
     {
         private readonly HttpClient httpClient;
         private CosmosClient cosmosClient;
-        private BlobClient blobClient;
 
         public ImageUploader()
         {
