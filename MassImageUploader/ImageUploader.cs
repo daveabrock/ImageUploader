@@ -11,6 +11,7 @@ using Azure.Storage;
 using Azure.Storage.Blobs;
 using System.Linq;
 using Microsoft.Azure.Cosmos;
+using System.Collections.Generic;
 
 namespace MassImageUploader
 {
@@ -28,18 +29,23 @@ namespace MassImageUploader
 
         [FunctionName("Uploader")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "upload")] HttpRequest req,
+            [TimerTrigger("0 30 6 * * *")] TimerInfo timer,
+            // [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "upload")] HttpRequest req,
             ILogger log)
         {
+            log.LogInformation($"Function executing at {DateTime.Now}");
+
             var apiKey = Environment.GetEnvironmentVariable("ApiKey");
 
-            var response = await httpClient.GetAsync($"https://api.nasa.gov/planetary/apod?api_key={apiKey}");
+            var response = await httpClient.GetAsync(
+                $"https://api.nasa.gov/planetary/apod?api_key={apiKey}");
             var result = await response.Content.ReadAsStringAsync();
 
-            var imageDetails = JsonConvert.DeserializeObject<Image>(result);
-
-            await UploadImageToAzureStorage(imageDetails.Url);
-            await AddImageToContainer(imageDetails);
+            var image = JsonConvert.DeserializeObject<Image>(result);
+            log.LogInformation($"Processing URL {image.Url}");
+            await UploadImageToAzureStorage(image.Url);
+            await AddImageToContainer(image);
+            
             return new OkObjectResult("Processing complete.");
         }
 
