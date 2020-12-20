@@ -1,17 +1,12 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net.Http;
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using System.Linq;
 using Microsoft.Azure.Cosmos;
-using System.Collections.Generic;
 using System.IO;
 
 namespace MassImageUploader
@@ -19,7 +14,7 @@ namespace MassImageUploader
     public class ImageUploader
     {
         private readonly HttpClient httpClient;
-        private CosmosClient cosmosClient;
+        private readonly CosmosClient cosmosClient;
 
         public ImageUploader()
         {
@@ -30,14 +25,15 @@ namespace MassImageUploader
 
         [FunctionName("Uploader")]
         public async void Run(
-            [TimerTrigger("0 30 6 * * *")] TimerInfo timer,
-            // [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "upload")] HttpRequest req,
+            [TimerTrigger("0 0 7 * * *")] TimerInfo timer,
             ILogger log)
         {
+            if (timer.IsPastDue)
+                log.LogInformation("Function is running after specified time.");
+            
             log.LogInformation($"Function executing at {DateTime.Now}");
 
             var apiKey = Environment.GetEnvironmentVariable("ApiKey");
-
             var response = await httpClient.GetAsync(
                 $"https://api.nasa.gov/planetary/apod?api_key={apiKey}");
             var result = await response.Content.ReadAsStringAsync();
@@ -56,7 +52,12 @@ namespace MassImageUploader
                     Environment.GetEnvironmentVariable("StorageAccount"),
                     Environment.GetEnvironmentVariable("StorageKey"));
             var blobClient = new BlobClient(blobUri, storageCredentials);
-            await blobClient.StartCopyFromUriAsync(new Uri(imageUri));
+
+            if (!blobClient.Exists())
+            {
+                await blobClient.StartCopyFromUriAsync(new Uri(imageUri));
+            }
+
             return await Task.FromResult(true);
         }
 
