@@ -4,7 +4,7 @@
 
 This function app does three things:
 
-- Grabs today's "image of the day" from NASA APOD API
+- Grabs today's "image of the day" from NASA APOD API using an Azure Functions timer trigger 
 - Copies image to Azure Blob Storage
 - Adds metadata (including the new Azure Storage URI to Cosmos DB)
 
