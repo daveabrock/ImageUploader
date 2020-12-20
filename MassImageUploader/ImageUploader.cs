@@ -28,7 +28,7 @@ namespace MassImageUploader
         }
 
         [FunctionName("Uploader")]
-        public async Task<IActionResult> Run(
+        public static void Run(
             [TimerTrigger("0 30 6 * * *")] TimerInfo timer,
             // [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "upload")] HttpRequest req,
             ILogger log)
