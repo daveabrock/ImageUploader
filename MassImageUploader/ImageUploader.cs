@@ -12,6 +12,7 @@ using Azure.Storage.Blobs;
 using System.Linq;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Generic;
+using System.IO;
 
 namespace MassImageUploader
 {
@@ -28,7 +29,7 @@ namespace MassImageUploader
         }
 
         [FunctionName("Uploader")]
-        public static void Run(
+        public async void Run(
             [TimerTrigger("0 30 6 * * *")] TimerInfo timer,
             // [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "upload")] HttpRequest req,
             ILogger log)
@@ -45,13 +46,11 @@ namespace MassImageUploader
             log.LogInformation($"Processing URL {image.Url}");
             await UploadImageToAzureStorage(image.Url);
             await AddImageToContainer(image);
-            
-            return new OkObjectResult("Processing complete.");
         }
 
         private async Task<bool> UploadImageToAzureStorage(string imageUri)
         {
-            var fileName = GetFileNameFromUrl(imageUri);
+            var fileName = Path.GetFileName(imageUri);
             var blobUri = new Uri($"{Environment.GetEnvironmentVariable("BlobContainerUrl")}/{fileName}");
             var storageCredentials = new StorageSharedKeyCredential(
                     Environment.GetEnvironmentVariable("StorageAccount"),
@@ -66,19 +65,13 @@ namespace MassImageUploader
             var container = cosmosClient.GetContainer(Environment.GetEnvironmentVariable("CosmosDatabase"),
                                                       Environment.GetEnvironmentVariable("CosmosContainer"));
 
-            var fileName = GetFileNameFromUrl(image.Url);
+            var fileName = Path.GetFileName(image.Url);
 
             image.Id = Guid.NewGuid();
             image.Url = $"{Environment.GetEnvironmentVariable("BlobContainerUrl")}/{fileName}";
 
             await container.CreateItemAsync(image);
             return await Task.FromResult(true);
-        }
-
-        private string GetFileNameFromUrl(string urlString)
-        {
-            var url = new Uri(urlString);
-            return url.Segments.Last();
         }
     }
 }
