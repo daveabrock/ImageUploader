@@ -8,6 +8,8 @@ This function app does three things:
 - Copies image to Azure Blob Storage
 - Adds metadata (including the new Azure Storage URI to Cosmos DB)
 
+This is all in support of [my "Blast Off with Blazor" site](https://github.com/daveabrock/NASAImageOfDay).
+
 ## Run locally
 
 To run locally, you'll need:
